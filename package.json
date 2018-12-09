@@ -1,0 +1,16 @@
+{
+  "name": "mtg-telegram-bot",
+  "version": "1.0.0",
+  "description": "A bot for dretreiving and displaying Magic the Gathering info for Telegram",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "mtgsdk": "^0.4.2",
+    "node-telegram-bot-api": "^0.30.0",
+    "telebot": "^1.2.6"
+  }
+}
