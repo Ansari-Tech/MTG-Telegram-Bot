@@ -7,8 +7,33 @@ var cheerio = require('cheerio');
 
 bot.on(/{(.*?)}/, (msg) => {
     mtg.card.where({name: msg.text.match(/[^{\}]+(?=})/)[0]})
+    
     .then(results => {
-        return msg.reply.photo(results[results.length -1].imageUrl);
+        var i;
+        var index = results.length -1;
+        for(i = 0; i < results.length; i++) {
+            //msg.reply.text(results[i].name);
+            if(results[i].name.toLowerCase() == msg.text.match(/[^{\}]+(?=})/)[0].toLowerCase()){
+                index = i;
+            } 
+        }
+        console.log(results[index].name);
+        var url = "https://img.scryfall.com/cards/large/en/";
+        var setCode = results[index].printings[0].toLowerCase();
+        mtg.card.where({name: msg.text.match(/[^{\}]+(?=})/)[0].toLowerCase(), set: setCode}).then(results => {
+            var i;
+            var index = results.length -1;
+            for(i = 0; i < results.length; i++) {
+                //msg.reply.text(results[i].name);
+                if(results[i].name.toLowerCase() == msg.text.match(/[^{\}]+(?=})/)[0].toLowerCase()){
+                    index = i;
+                } 
+            }
+            console.log(results[index].number);
+            url += setCode + "/" + results[index].number + ".jpg";
+            console.log(url);
+            return msg.reply.photo(url);
+        })
     })
     .catch((err) => {
         console.log(err);
@@ -34,7 +59,7 @@ bot.on(/^\/set (.+)$/, (msg, props) => {
     const card = props.match[1];
     mtg.card.where({name: card})
     .then(results => {
-        msg.reply.text(results[results.length -1].setName);
+        msg.reply.text(results[results.length -1].set);
     })
     .catch((err) => {
         console.log(err);
@@ -46,22 +71,45 @@ bot.on(/(show\s)?kitty*/, (msg) => {
 });
 
 
+const INVALID_SETS = [
+    "Masters Edition",
+    "Masters Edition II",
+    "Magic 2010",
+    "Commander Theme Decks",
+    "Masters Edition III",
+    "Magic Online Deck Series",
+    "Momir Basic Event Deck",
+    "Masters Edition IV",
+    "Duel Decks Mirrodin Pure vs New Phyrexia",
+    "Vintage Masters",
+    "Tempest Remastered",
+    "Legendary Cube",
+    "Treasure Chests",
+    "You Make the Cube"
+]
 bot.on(/^\/price (.+)$/, (msg, props) => {
     const card = props.match[1];
     mtg.card.where({name: card})
     .then(results => {
         var set = results[results.length -1].setName;
+        var i;
+        for(i  = 0; i < INVALID_SETS.length; i++) {
+            if(INVALID_SETS[i] == set) {
+                set = results[results.length -2].setName;
+            }
+        }
         var urlSet = set.split(' ').join('-');
         var cardName = results[results.length -1].name
         var urlName = cardName.split(' ').join('-');
         var url = "https://shop.tcgplayer.com/magic/" + urlSet + "/" + urlName
+console.log(url);
         rp(url)
         .then(function(html){
             var $ = cheerio.load(html);
-            console.log($(".price-point__data").html());
             msg.reply.text($(".price-point__data").html());
         })
         .catch((err) => {
+            msg.reply.text(url);
             console.log(err);
         })
         
