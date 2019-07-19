@@ -10,19 +10,23 @@ bot.on('message', message => {
   var cardsText = message.text.match(/[^{\}]+(?=})/g);
   if(cardsText != null) {
     getCardImages(cardsText, function(cardImages, cardPrices) {
+      try {
+        var prices = "```\n";
+        let i;
+        for(i = 0; i < cardPrices.length; i++){
+          prices = prices + cardPrices[i] + "\n";
+        }
+        prices = prices + "```";
+        cardImages[0].caption = prices;
+        if(cardImages.length > 1) {
+          bot.sendMediaGroup(message.chat.id, JSON.stringify(cardImages), {reply_to_message_id: message.id});
+        } else {
+          bot.sendPhoto(message.chat.id, cardImages[0].media, {reply_to_message_id: message.id});
+        }
+      }catch (error){
+        console.log(error);
+      }
 
-      var prices = "```\n";
-      let i;
-      for(i = 0; i < cardPrices.length; i++){
-        prices = prices + cardPrices[i] + "\n";
-      }
-      prices = prices + "```";
-      cardImages[0].caption = prices;
-      if(cardImages.length > 1) {
-        bot.sendMediaGroup(message.chat.id, JSON.stringify(cardImages), {reply_to_message_id: message.id});
-      } else {
-        bot.sendPhoto(message.chat.id, cardImages[0].media, {reply_to_message_id: message.id});
-      }
     });
   }
 });
