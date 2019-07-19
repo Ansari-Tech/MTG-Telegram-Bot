@@ -1,68 +1,74 @@
-const TeleBot = require("telebot");
-const mtg = require("mtgsdk");
-const bot = new TeleBot("774505678:AAE9joL3A9b80Xv5tigE8h_mCiZA9j34sCY");
-const rp = require("request-promise");
-var cheerio = require("cheerio");
+const Slimbot = require('slimbot');
+const async = require('async');
 var request = require("request");
+const bot = new Slimbot('774505678:AAE9joL3A9b80Xv5tigE8h_mCiZA9j34sCY');
+// Register listeners
 
-function getCardObjectFromURL(url) {
-  var card;
-  request(url, function(error, response, body) {
-    //console.log(error);
-    //console.log(response);
-    //console.log(body);
-    card = JSON.parse(body);
-    console.log(card);
-  });
-  return card;
-}
-bot.on(/{(.*?)}/, msg => {
-  mtg.card
-    .where({ name: msg.text.match(/[^{\}]+(?=})/)[0] })
 
-    .then(results => {
-      var i;
-      var index = results.length - 1;
-      for (i = 0; i < results.length; i++) {
-        //msg.reply.text(results[i].name);
-        if (
-          results[i].name.toLowerCase() ==
-          msg.text.match(/[^{\}]+(?=})/)[0].toLowerCase()
-        ) {
-          index = i;
-        }
+
+bot.on('message', message => {
+  var cardsText = message.text.match(/[^{\}]+(?=})/g);
+  if(cardsText != null) {
+    getCardImages(cardsText, function(cardImages, cardPrices) {
+
+      var prices = "```\n";
+      let i;
+      for(i = 0; i < cardPrices.length; i++){
+        prices = prices + cardPrices[i] + "\n";
       }
-      console.log(results[index].name);
-      var url = "https://api.scryfall.com/cards/";
-      var setCode = results[index].printings[0].toLowerCase();
-      mtg.card
-        .where({
-          name: msg.text.match(/[^{\}]+(?=})/)[0].toLowerCase(),
-          set: setCode
-        })
-        .then(results => {
-          var i;
-          var index = results.length - 1;
-          for (i = 0; i < results.length; i++) {
-            //msg.reply.text(results[i].name);
-            if (
-              results[i].name.toLowerCase() ==
-              msg.text.match(/[^{\}]+(?=})/)[0].toLowerCase()
-            ) {
-              index = i;
-            }
-          }
-          console.log(results[index].number);
-          url += setCode + "/" + results[index].number;
-          console.log(url);
-          var card = getCardObjectFromURL(url);
-          console.log(card);
-          //return msg.reply.photo(card.image_uris.png);
-        });
-    })
-    .catch(err => {
-      console.log(err);
+      prices = prices + "```";
+      cardImages[0].caption = prices;
+      if(cardImages.length > 1) {
+        bot.sendMediaGroup(message.chat.id, JSON.stringify(cardImages), {reply_to_message_id: message.id});
+      } else {
+        bot.sendPhoto(message.chat.id, cardImages[0].media, {reply_to_message_id: message.id});
+      }
     });
+  }
+});
+
+function getCardObjectFromURL(url, callback) {
+  request(url, function(error, response, body) {
+    return callback(JSON.parse(body));
+  });
+}
+
+function getCardImages(cardsText, callback) {
+  var cardImages = [];
+  var cardPrices = [];
+  let i;
+  async.forEach(cardsText, function(currCard, callback) {
+    let url = 'https://api.scryfall.com/cards/named?fuzzy=' + currCard;
+    getCardObjectFromURL(url, function(card) {
+      try {
+        let cardObj = {
+          type: "photo",
+          media: card.image_uris.png.substring(0,85),
+          caption: "",
+          parse_mode: "Markdown"
+        }
+        cardPrices.push(currCard + ": $" + card.prices.usd);
+        cardImages.push(cardObj);
+        callback();
+      } catch(error) {
+        console.log(error);
+        callback();
+      }
+    });
+  }, function(err) {return callback(cardImages, cardPrices);});
+}
+https://img.scryfall.com/cards/png/front/2/5/25f2e4d0-effd-4e83-b7aa-1a0d8f120951.png?1562732870
+bot.startPolling();
+/** 
+bot.on(/{(.*?)}/, msg => {
+  var url = 'https://api.scryfall.com/cards/named?fuzzy=' + msg.text.match(regexRemoveBrackets);
+  getCardObjectFromURL(url, function(card) {
+    try {
+      return msg.reply.photo(card.image_uris.png, {asReply: true, caption: "$" + card.prices.usd + " -- normal\n$" + card.prices.usd_foil + " -- foil"});
+    } catch(error) {
+      console.log(error);
+    }
+  });
 });
 
 bot.on(/^\/rulings (.+)$/, (msg, props) => {
@@ -89,7 +95,7 @@ bot.on(/^\/set (.+)$/, (msg, props) => {
       console.log(err);
     });
 });
-bot.on(/(show\s)?kitty*/, msg => {
+bot.on(/(show\s)?kitty*//**, msg => {
   return msg.reply.photo(
     "https://i.ytimg.com/vi/pID_QuyUi98/maxresdefault.jpg"
   );
@@ -144,3 +150,4 @@ bot.on(/^\/price (.+)$/, (msg, props) => {
 });
 
 bot.start();
+*/
