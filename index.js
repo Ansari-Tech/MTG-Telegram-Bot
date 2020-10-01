@@ -4,7 +4,7 @@ var request = require("request");
 const bot = new Slimbot('774505678:AAE9joL3A9b80Xv5tigE8h_mCiZA9j34sCY');
 // Register listeners
 
-
+console.log("powered up!");
 
 bot.on('message', message => {
   var cardsText = message.text.match(/[^{\}]+(?=})/g);
@@ -19,9 +19,22 @@ bot.on('message', message => {
         prices = prices + "```";
         cardImages[0].caption = prices;
         if(cardImages.length > 1) {
-          bot.sendMediaGroup(message.chat.id, JSON.stringify(cardImages), {reply_to_message_id: message.id});
+          try {
+		  console.log("sending media group");
+		  bot.sendMediaGroup(message.chat.id, JSON.stringify(cardImages), {reply_to_message_id: message.id});
+	  }catch(error){
+		  console.log("error sending media group");
+		  console.log(error);
+	  }
         } else {
-          bot.sendPhoto(message.chat.id, cardImages[0].media, {reply_to_message_id: message.id});
+          try{
+		  console.log("sending photo");
+		  console.log(cardImages[0]);
+		  bot.sendPhoto(message.chat.id, cardImages[0].media, cardImages[0].caption, {reply_to_message_id: message.id} );
+	  }catch (error){
+		  console.log("error sending photo\n");
+		  console.log(error);
+	  }
         }
       }catch (error){
         console.log(error);
@@ -47,7 +60,7 @@ function getCardImages(cardsText, callback) {
       try {
         let cardObj = {
           type: "photo",
-          media: card.image_uris.png.substring(0,85),
+          media: card.image_uris.png.split("?")[0],
           caption: "",
           parse_mode: "Markdown"
         }
