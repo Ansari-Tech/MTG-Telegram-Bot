@@ -10,7 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "async": "^3.1.0",
+    "async": "^3.2.2",
     "cheerio": "^1.0.0-rc.3",
     "mtgsdk": "^0.4.2",
     "node-telegram-bot-api": "^0.30.0",
